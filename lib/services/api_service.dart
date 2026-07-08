@@ -142,7 +142,7 @@ class ApiService {
     return newToken;
   }
 
-
+//========================== Prescription ======================================================
   Future<PrescriptionResponse> getPrescriptions({
     String? userId,
     int page = 1,
@@ -186,7 +186,7 @@ class ApiService {
       throw Exception('Unexpected error: $e');
     }
   }
-
+////////////////////////////////////////////////////
   Future<Response> getDoctorDetails(int doctorId) async {
     try {
       final response = await dio.get('/api/doctor/$doctorId');
@@ -206,21 +206,8 @@ class ApiService {
       throw Exception('Failed to load patient details: $e');
     }
   }
+
 // ---------------- LAB REPORT ----------------
-
-  Future<String?> _getToken() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('token');
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Future<String?> getToken() async {
-    return await _getToken();
-  }
-
   Future<dynamic> getLabReports({
     String? patientId,
     String? date,
@@ -228,6 +215,7 @@ class ApiService {
     int limit = 100,
   }) async {
     try {
+      final token = await TokenManager.getAccessToken();
       final queryParams = {
         'page': page.toString(),
         'limit': limit.toString(),
@@ -238,10 +226,16 @@ class ApiService {
       if (date != null && date.isNotEmpty) {
         queryParams['date'] = date;
       }
-
+       final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+ if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
       final response = await dio.get(
         '/api/lab-results',
         queryParameters: queryParams,
+         options: Options(headers: headers),
       );
 
       return response;
@@ -502,6 +496,8 @@ class ApiService {
   Future<Response> otpUser(Map<String, dynamic> data) async {
     return await dio.post('/api/users/otp', data: data);
   }
+
+
 
   // SIGNUP
   Future<Response> signupUser(Map<String, dynamic> data) async {
@@ -945,8 +941,11 @@ Future<Response> createDocument({
   }
 
 //logout
-Future<Response> logout(id, data) async {
+  Future<Response> logout(id, data) async {
     return await dio.post('/api/users/logout/$id', data: data);
   }
 }
+
+
+
 
